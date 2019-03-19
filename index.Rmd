@@ -1,0 +1,340 @@
+---
+title: "GoogleVis R library"
+author: "Mirnes Salkic"
+date: " Trent University, 6/20/2018"
+output:  
+  ioslides_presentation:
+    widescreen: true
+    smaller: true
+    css: styles.css
+ 
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+
+
+library("googleVis")
+
+```
+
+## Google Chart Tools {#GoogleChartTools .emphasized .flexbox .vcenter}
+
+- Google Chart Tools allow us to visualize data on web sites
+- The API makes it easy to create **interactive** charts
+- It uses JavaScript and JSON as input ankd outputs HTML5/SVG or Flash
+- It is wise to read [Google Terms of Service](https://developers.google.com/terms/) before the use
+
+
+
+## What is googleVis?{.flexbox .vcenter}
+
+- It is a package for R which provides interface between R and [Google Chart Tools](https://developers.google.com/chart/)
+- It allows us to visualize data with Google Chart Tools without uploading the data to Google
+- The output of googleVis functions is html code that contains the data and references to JavaScript functions hosted by Google
+- To see the output an internet connection is required. Some charts require Flash
+- **The main idea is to create wrapper functions that generate html files with references to Google's Chart Tools API**
+- Options in googleVis have to follow the Google Chart API options
+
+## Basic but important info{.flexbox .vcenter}
+
+- We load the library using library("googleVis")
+- To see the charts we need to set the global options `results = 'asis'`
+- The chart will visualize if we use `print(`nameOfTheChart`, tag='chart')`
+- There are also two default global options: 
+1. `gvis.print.tag='html'` - everytime you create an interactive visualization and run it, it will open a new html file for you. 
+2. `gvis.plot.tag=NULL`. 
+- If we want to print only the chart part [the html code] of the gvis-object without opening a browser window we should change the default in the global setting to: `gvis.plot.tag='chart'`. 
+- If we change the global options we may use `plot()` instead of `print(nameOfTheChart`, tag='chart')`
+
+
+
+## Line Chart{.flexbox .vcenter}
+
+```{r fig.height=5, fig.width=8}
+
+df=data.frame(country=c("CA", "GB", "US"), 
+              val1=c(10,13,14), 
+              val2=c(23,12,32))
+
+```
+
+```{r results='asis'}
+
+line <- gvisLineChart(df, options= list(width=600, height=400))
+print(line, 'chart')
+
+```
+
+
+## Line Chart Cont.{.flexbox .vcenter}
+
+```{r results='asis'}
+#the background color is not wisely chosen - but it is just for demonstration 
+line <- gvisLineChart(df, "country", c("val1", "val2"), 
+                      options = list(
+                        title="Hello I Am a Line Chart",
+                        backgroundColor="yellow",
+                        series = "[{targetAxisIndex:0}, 
+                                  {targetAxisIndex:1}]", 
+                        vAxes = "[{title:'val1'}, {title: 'val2'}]", 
+                        width=500, height=250))
+print(line, 'chart')
+
+```
+- The first argument is the data frame followed by the xvar and yvar
+
+
+## Edit Me Chart{.flexbox .vcenter}
+
+
+```{r fig.height=5, fig.width=8}
+df <- data.frame(label=c("US", "GB", "BR"), val1=c(1,3,4), val2=c(23,12,32))
+Line <- gvisLineChart(df, xvar="label", yvar=c("val1","val2"),
+        options=list(title="Hello World", legend="bottom",
+                titleTextStyle="{color:'red', fontSize:18}",                         
+                vAxis="{gridlines:{color:'red', count:3}}",
+                hAxis="{title:'My Label', titleTextStyle:{color:'blue'}}",
+                series="[{color:'green', targetAxisIndex: 0}, 
+                         {color: 'blue',targetAxisIndex:1}]",
+                vAxes="[{title:'Value 1 (%)', format:'##,######%'}, 
+                                  {title:'Value 2 (\U00A3)'}]",                          
+                curveType="function", width=500, height=300                         
+                ))
+
+
+
+```
+## Edit Me Chart Cont.{.flexbox .vcenter}
+
+```{r echo = TRUE, results='asis'}
+print(gvisLineChart(df, options = list(gvis.editor = "Edit me!", width= 550, height = 350)), 'chart')
+
+```
+
+The `gvis.editor` adds an edit option to the chart and allows the user to edit, change, and customize the chart on the fly. 
+
+## Bar Chart{.flexbox .vcenter}
+
+```{r results='asis', fig.height=6, fig.width=8}
+bar <- gvisBarChart(df, options=list(width=700, height=450))
+print(bar, 'chart')
+
+```
+## Scatterplot{#SC .text .flexbox .vcenter}
+
+```{r results='asis', fig.height=8, fig.width=5}
+M <- matrix(nrow=6,ncol=6)
+M[col(M)==row(M)] <- 1:6
+dat <- data.frame(X=1:6, M)
+SC <- gvisScatterChart(dat, 
+                       options=list(
+                         title="Customizing points",
+                         legend="right",
+                         pointSize=30,
+                         width=800,
+                         height=400,
+                         series="{
+                              0: { pointShape: 'circle' },
+                              1: { pointShape: 'triangle' },
+                              2: { pointShape: 'square' },
+                              3: { pointShape: 'diamond' },
+                              4: { pointShape: 'star' },
+                              5: { pointShape: 'polygon' }
+                              }"))
+```
+
+## Scatterplot Cont.{.flexbox .vcenter}
+
+```{r results='asis'}
+print(SC, 'chart')
+
+```
+
+
+## Bubble Chart{.flexbox .vcenter}
+
+```{r results='asis'}
+
+bubble <- gvisBubbleChart(Fruits, idvar="Fruit", 
+                          xvar="Sales", yvar="Expenses",
+                          colorvar="Year", sizevar="Profit",
+                          options=list(
+                            hAxis='{minValue:75, maxValue:125}', height=350, width=800) 
+                          )
+print(bubble, 'chart')
+
+
+```
+
+## Geo-spatial Data{.flexbox .vcenter}
+
+```{r}
+
+require(datasets)
+states <- data.frame(state.name, state.x77)
+geoStates <- gvisGeoChart(states, "state.name", "Illiteracy",
+                          options=list(region="US", 
+                                       displayMode="regions", 
+                                       resolution="provinces",
+                                       width=600, height=400))
+
+```
+- The format of the data depends on which displayMode we are using. For instance, if we use "regions" then we need to have at least one columns with location name. The other format that works in both cases is supplying the "latitude:longitude" info. 
+- `gvisGeoChart(data, locationvar = "", colorvar = "", sizevar = "",
+  hovervar = "", options = list(), chartid)`
+
+
+##Geo-spatial Data Cont.{.flexbox .vcenter}
+
+```{r results='asis'}
+
+print(geoStates, 'chart')
+
+```
+
+## Treemap{.flexbox .vcenter}
+
+```{r results='asis'}
+
+Tree <- gvisTreeMap(Regions,  
+                    "Region", "Parent", 
+                    "Val", "Fac", 
+                    options=list(fontSize=16, width=450, height=450))
+
+```
+
+- We need a data frame with at least four columns. Each row in the data table describes one node (a rectangle in the graph).
+- `gvisTreeMap(data, idvar = "", parentvar = "", sizevar = "",
+  colorvar = "", options = list(), chartid)`
+
+## Treemap Cont.{.flexbox .vcenter}
+
+
+```{r results='asis'}
+print(Tree, 'chart')
+
+```
+
+```{r echo=FALSE}
+library("rdatamarket")
+dminit(NULL)
+#importing the data 
+life_expectancy <- dmlist("15r2!hrp")
+population <- dmlist("1cfl!r3d")
+gdp <- dmlist("15c9!hd1")
+```
+
+```{r echo=FALSE}
+library("plyr")
+#library("dplyr")
+
+# Rename the Value for each dataset
+names(gdp)[3] <- "GDP"
+names(population)[3] <- "Population"
+names(life_expectancy)[3] <- "LifeExpectancy"
+
+# Use plyr to join your three data frames into one: development 
+gdp_life_exp <- join(gdp, life_expectancy)
+development <- join(gdp_life_exp, population)
+
+# Subset development with Year on or before 2008
+#Since there isn't enough data for all variables
+development_complete <- subset(development, Year <=2008 )
+
+#selection <- c("Afghanistan", "Australia", "Austria", "Belgium", "Bolivia", "Bosnia and Herzegovina", "Brazil", "Cambodia", "Canada", "Croatia", "Azerbaijan",
+               # "Chile", "China", "Denmark", "Estonia", "Ethiopia", "Finland", "France", "Georgia", "Germany", "Ghana", "Greece", "India", "Indonesia", "Iraq",
+                #"Italy", "Iran, Islamic Rep.", "Israel", "Japan", "Kosovo", "Lithuania", "Luxembourg", "Mexico", "New Zealand", "Niger", "Norway", "Pakistan", #"Poland", "Portugal", "Rwanda", "Serbia", "Somalia", "South Africa", "Spain", "Sweden", "Switzerland", "Turkey", "Uganda", "Ukraine", "United Kingdom", "United #States","Vietnam")
+
+selection <- c("Afghanistan", "Bosnia and Herzegovina", "Canada", "China", "France", "Germany", "India", "Iraq", "South Africa", "Somalia", "United States",
+               "Ethiopia", "Rwanda", "Turkey", "Switzerland", "Sweden")
+
+development_final <- subset(development_complete, Country %in% selection)
+development_final$logGDP <- log(development_final$GDP)
+
+```
+
+## Recreating Hans Rosling's Famous Motion Chart{.flexbox .vcenter}
+
+- A motion chart is a dynamic chart that allows us to explore several indicators over time. 
+
+- The data was imported from [Data Market](https://datamarket.com/), a company that lets us search public data and load it into R with the `rdatamarket` library.
+- I combined three data sets: Population, GDP and life_expectancy. The data is preprocessed. 
+
+```{r results='asis'}
+suppressPackageStartupMessages(library(googleVis))
+                               
+motion_chart <- gvisMotionChart(development_final,
+                                idvar = "Country",
+                                timevar = "Year",
+                                xvar = "logGDP",
+                                yvar = "LifeExpectancy",
+                                sizevar = "Population",
+                                options=list(height=450, width=700))
+
+```
+
+- `data` - it has to be a data frame with at least 4 columns 
+- `idvar` -  column name of the data with the subject to be analysed 
+- `colorvar` - column name of data that identifies bubbles in the same series
+
+
+
+## Motion Chart Cont. {.flexbox .vcenter}
+```{r results='asis'}
+print(motion_chart,'chart')
+```
+
+## Merging Charts{.flexbox .vcenter}
+
+```{r results='asis'}
+
+G <- gvisGeoChart(Exports, "Country", "Profit", 
+                  options=list(width=400, height=300))
+T <- gvisTable(Exports, 
+               options=list(width=220, height=300))
+
+GT <- gvisMerge(G,T, horizontal=TRUE) #try setting horizontal=FALSE
+print(GT, 'chart')
+
+```
+## Tables{.flexbox .vcenter}
+
+```{r results='asis'}
+
+PopTable <- gvisTable(Population, 
+                      formats=list(Population="#,###",
+                                   '% of World Population'='#.#%'),
+                      options=list(page='enable'))
+print(PopTable, 'chart')
+
+```
+## Organization Chart{.flexbox .vcenter}
+
+```{r results='asis'}
+
+org <- gvisOrgChart(Regions, 
+                    options=list(width=600, height=250,
+                                 size='large', allowCollapse=TRUE))
+print(org, 'chart')
+
+
+```
+
+## Other functions {.flexbox .vcenter}
+
+- Column Chart - gvisColumnChart()
+_ Area Chart - gvisAreaChart()
+- Stepped Area Chart gvisSteppedAreaChart() 
+- Mix of BarChart and Line Chart gvisComboChart() 
+- Candlestick Chart gvisCandlestickChart()
+- Pie Chart gvisPieChart() 
+- Annotation Chart gvisAnnotationChart(), and **many other!**
+
+## References and Useful Links{.flexbox .vcenter}
+
+- [googleVis Tutorial](http://decastillo.github.io/googleVis_Tutorial/#1) by the authors of the package
+- [googleVis Documentation](https://cran.r-project.org/web/packages/googleVis/vignettes/googleVis.pdf#%5B%7B"num"%3A41%2C"gen"%3A0%7D%2C%7B"name"%3A"XYZ"%7D%2C133.768%2C605.43%2Cnull%5D)   
+- [Cran Tutorial](https://cran.r-project.org/web/packages/googleVis/vignettes/googleVis_examples.html)
+- DataCamp course - Having Fun with googleVis
+
